@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  --background: #FDFCF8;
+  --foreground: #2D2D2D;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  
+  /* Custom brand colors */
+  --color-brand-orange: #EF9C66;
+  --color-brand-yellow: #FCDC94;
+  --color-brand-green: #C8CFA0;
+  --color-brand-teal: #78ABA8;
+  --color-brand-text: #2D2D2D;
+}
+
+body {
+  background: #FDFCF8;
+  color: #2D2D2D;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}

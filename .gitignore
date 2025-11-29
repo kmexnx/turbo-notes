@@ -1,0 +1,42 @@
+# GENERAL
+.DS_Store
+.vscode/
+.idea/
+*.log
+
+# DOCKER 
+postgres_data/
+.env
+
+# Python
+backend/venv/
+backend/env/
+backend/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/*.pyd
+backend/db.sqlite3
+backend/media/
+backend/staticfiles/
+
+backend/.pytest_cache/
+
+# Node.js
+frontend/node_modules/
+frontend/.next/
+frontend/build/
+frontend/dist/
+frontend/.npmrc
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.pnp.*
+
+# Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+frontend/.env
