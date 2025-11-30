@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
-import { X, ChevronDown, Loader2, Mic, MicOff, Check, Clock } from 'lucide-react';
+import { X, ChevronDown, Loader2, Mic, MicOff, Check, Clock, Trash2, Sparkles } from 'lucide-react';
 import { formatLocalTime } from '@/utilis/date';
+import { toast } from 'sonner';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 
 
 interface Category {
@@ -32,6 +34,8 @@ export default function NoteEditorPage({ params }: { params: Promise<{ id: strin
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const debouncedTitle = useDebounce(title, 800);
   const debouncedContent = useDebounce(content, 1000);
@@ -111,7 +115,58 @@ export default function NoteEditorPage({ params }: { params: Promise<{ id: strin
     }
   }, [transcript]);
 
+  const handleDelete = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notes/${noteId}/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
+      if (res.ok) {
+        toast.success('Note deleted successfully');
+        router.push('/');
+      } else {
+        toast.error('Failed to delete note');
+      }
+    } catch (error) {
+      console.error('Failed to delete note:', error);
+      toast.error('An error occurred while deleting the note');
+    } finally {
+      setShowDeleteModal(false);
+    }
+  };
+
+  const handleMagicCategorize = async () => {
+    if (!content || isAnalyzing) return;
+    
+    setIsAnalyzing(true);
+    toast.info("Asking Gemini where this belongs...");
+
+    try {
+        const res = await fetch('/api/ai/categorize', {
+            method: 'POST',
+            body: JSON.stringify({ 
+                content, 
+                categories
+            })
+        });
+
+        const data = await res.json();
+        
+        if (data.id) {
+            setCategoryId(data.id); 
+            toast.success("Categorized automatically! ✨");
+        }
+    } catch (e) {
+        toast.error("AI got confused");
+    } finally {
+        setIsAnalyzing(false);
+    }
+  };
+
+  
   if (isLoading) return <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin"/></div>;
 
   return (
@@ -141,7 +196,25 @@ export default function NoteEditorPage({ params }: { params: Promise<{ id: strin
             </select>
         </div>
 
+
         <div className="flex items-center gap-4">
+             <button 
+                onClick={handleMagicCategorize}
+                disabled={isAnalyzing}
+                className={`p-2 rounded-full transition-all ${
+                    isAnalyzing ? 'animate-spin bg-brand-text text-white' : 'hover:bg-white/20 text-brand-text'
+                }`}
+                title="Auto-Categorize with AI"
+              >
+                <Sparkles size={20} />
+             </button>
+             <button 
+                onClick={() => setShowDeleteModal(true)}
+                className="p-2 hover:bg-black/5 rounded-full transition-colors text-brand-text"
+                aria-label="Delete note"
+             >
+                <Trash2 size={24} strokeWidth={1.5} />
+            </button>
              <button 
                 onClick={() => router.push('/')}
                 className="p-2 hover:bg-black/5 rounded-full transition-colors text-brand-text"
@@ -186,7 +259,16 @@ export default function NoteEditorPage({ params }: { params: Promise<{ id: strin
         )}
         
         <button
-          onClick={isListening ? stopListening : startListening}
+          onClick={() => {
+            if (isListening) {
+                stopListening();
+                if (transcript) {
+                    setContent(prev => prev + " " + transcript);
+                }
+            } else {
+                startListening();
+            }
+            }}
           className={`relative p-4 m-4 rounded-full shadow-lg transition-all ${
             isListening
               ? 'bg-brand-text scale-110'
@@ -201,6 +283,13 @@ export default function NoteEditorPage({ params }: { params: Promise<{ id: strin
           )}
         </button>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+      />
 
     </div>
   );

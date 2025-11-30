@@ -11,7 +11,7 @@ def create_default_categories(sender, instance, created, **kwargs):
 
         defaults = [
             ("Random Thoughts", "#EF9C66"),
-            ("Turbo stuff", "#FCDC94"),
+            ("School", "#FCDC94"),
             ("Personal", "#C8CFA0"),
         ]
         

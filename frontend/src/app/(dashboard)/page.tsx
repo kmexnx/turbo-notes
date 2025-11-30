@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import { Plus, Loader2 } from 'lucide-react';
 import NoteCard from '@/components/NoteCard';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { formatLocalTime } from '@/utilis/date';
+import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
 interface Note {
@@ -22,6 +24,7 @@ export default function DashboardPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState<number | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -43,7 +46,7 @@ export default function DashboardPage() {
       y: 0,
       transition: {
         duration: 0.5,
-        ease: 'easeOut',
+        ease: [0.4, 0, 0.2, 1] as const,
       },
     },
   };
@@ -109,6 +112,35 @@ export default function DashboardPage() {
     createNote();
   };
 
+  const handleDeleteNote = async () => {
+    if (!noteToDelete) return;
+
+    const token = Cookies.get('accessToken');
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notes/${noteToDelete}/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (res.ok) {
+        toast.success('Note deleted successfully');
+        // Remove the note from the list
+        setNotes((prevNotes) => prevNotes.filter(note => note.id !== noteToDelete));
+      } else {
+        toast.error('Failed to delete note');
+      }
+    } catch (error) {
+      console.error('Failed to delete note:', error);
+      toast.error('An error occurred while deleting the note');
+    } finally {
+      setNoteToDelete(null);
+    }
+  };
+
   return (
     <div className="mx-auto">
 
@@ -149,6 +181,7 @@ export default function DashboardPage() {
                       date={formatLocalTime(note.updated_at)} 
                       categoryColor={note.category_color}
                       onClick={() => router.push(`/note/${note.id}`)}
+                      onDelete={() => setNoteToDelete(note.id)}
                   />
                 </motion.div>
             ))}
@@ -167,6 +200,13 @@ export default function DashboardPage() {
             )}
         </motion.div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={noteToDelete !== null}
+        onClose={() => setNoteToDelete(null)}
+        onConfirm={handleDeleteNote}
+      />
     </div>
   );
 }
