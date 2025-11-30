@@ -25,12 +25,23 @@ class NoteViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Security: Return ONLY notes belonging to the logged-in user
-        return Note.objects.filter(owner=self.request.user).order_by('-updated_at')
+        queryset = Note.objects.filter(owner=self.request.user).order_by('-updated_at')
+        category_id = self.request.query_params.get('category')
+        if category_id is not None:
+            queryset = queryset.filter(category__id=category_id)
+        return queryset
 
     def perform_create(self, serializer):
-        """
-        Hook run before saving the new instance.
-        We manually inject the owner from the request.user so they don't have to send it in JSON.
-        """
-        serializer.save(owner=self.request.user)
+        user = self.request.user
+        category = serializer.validated_data.get('category')
+
+        if not category:
+            # Assign "Random Thoughts" by default
+            default_cat = Category.objects.filter(owner=user, name="Random Thoughts").first()
+            # Fallback if specific category doesn't exist
+            if not default_cat:
+                default_cat = Category.objects.filter(owner=user).first()
+            
+            serializer.save(owner=user, category=default_cat)
+        else:
+            serializer.save(owner=user)

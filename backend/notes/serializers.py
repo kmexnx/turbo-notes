@@ -27,7 +27,9 @@ class NoteSerializer(serializers.ModelSerializer):
     category_id = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(), 
         source='category', 
-        write_only=True
+        write_only=True,
+        required=False,
+        allow_null=True
     )
 
     # Date formatting for the UI
