@@ -6,8 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 
-export default function LoginPage() {
-  const { login, loading } = useAuth(); // Assuming 'loading' is exposed from context
+export default function SignupPage() {
+  const { signup } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -20,19 +20,21 @@ export default function LoginPage() {
     setIsSubmitting(true);
     
     try {
-      await login(email, password);
-      // Redirect happens in AuthContext
+      // We pass the username as the email prefix for simplicity, or just let backend handle it
+      // The AuthContext signature might vary, assuming signup(email, name, password) based on previous turn
+      const name = email.split('@')[0]; 
+      await signup(email, name, password);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to login');
+      setError(err instanceof Error ? err.message : 'Failed to create account');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 relative overflow-hidden">
-      
-      <div className="absolute bottom-0 left-10 opacity-50 hidden md:block">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 relative">
+       {/* Decorative Elements */}
+       <div className="absolute bottom-0 left-10 opacity-50 hidden md:block">
          <span className="text-6xl">🌵</span>
       </div>
       <div className="absolute bottom-0 right-10 opacity-50 hidden md:block">
@@ -41,18 +43,17 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md z-10">
         <h1 className="text-4xl font-bold text-center text-brand-text mb-8 font-serif">
-            <Image
-                src="/welcome-back.svg"
-                alt="TurboNotes cat"
-                width={120}
-                height={40}
-                className="mx-auto mb-4"
+          <Image
+            src="/cat.svg"
+            alt="TurboNotes cat"
+            width={200}
+            height={50}
+            className="mx-auto mb-4"
           />
-          Yay, You're Back!
+          Yay, New Friend!
         </h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          
           <div className="group">
             <input
               type="email"
@@ -82,7 +83,6 @@ export default function LoginPage() {
             </button>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="text-red-500 text-sm text-center bg-red-50 p-2 rounded-lg">
               {error}
@@ -91,19 +91,19 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={isSubmitting || loading}
+            disabled={isSubmitting}
             className="bg-[#EF9C66] hover:bg-[#E58B55] text-white font-medium py-3 rounded-xl transition-all shadow-sm hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center mt-2"
           >
-            {isSubmitting ? <Loader2 className="animate-spin" /> : 'Login'}
+            {isSubmitting ? <Loader2 className="animate-spin" /> : 'Sign Up'}
           </button>
         </form>
 
         <div className="mt-6 text-center">
           <Link 
-            href="/signup" 
-            className="text-sm text-brand-text underline decoration-gray-300 underline-offset-4 transition-all cursor-pointer"
+            href="/login" 
+            className="text-sm text-brand-text underline decoration-gray-300 underline-offset-4 transition-all"
           >
-            Forgot I've never been here before
+            We're already friends!
           </Link>
         </div>
       </div>
